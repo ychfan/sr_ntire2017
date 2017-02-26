@@ -12,7 +12,9 @@ def build_model(x):
 
 def res_group(x, hidden_size, projection_size, name, reuse):
     prev_x = x
-    x = tf.layers.conv2d(x, hidden_size, 3, padding='same', activation=tf.sigmoid, name=name+'_kern', reuse=reuse)
+    x_filter = tf.layers.conv2d(x, hidden_size, 3, padding='same', activation=tf.tanh, name=name+'_filt', reuse=reuse)
+    x_gate = tf.layers.conv2d(x, hidden_size, 3, padding='same', activation=tf.sigmoid, name=name+'_gate', reuse=reuse)
+    x = x_filter * x_gate
     x = tf.layers.conv2d(x, projection_size, 1, activation=None, name=name+'_proj', reuse=reuse)
     for i in range(6):
         x = conv_res(x, hidden_size, projection_size, name+'_res'+str(i), reuse)
@@ -23,7 +25,9 @@ def res_group(x, hidden_size, projection_size, name, reuse):
 
 def conv_res(x, hidden_size, projection_size, name, reuse):
     prev_x = x
-    x = tf.layers.conv2d(x, hidden_size, 3, padding='same', activation=tf.sigmoid, name=name+'_kern', reuse=reuse)
+    x_filter = tf.layers.conv2d(x, hidden_size, 3, padding='same', activation=tf.tanh, name=name+'_filt', reuse=reuse)
+    x_gate = tf.layers.conv2d(x, hidden_size, 3, padding='same', activation=tf.sigmoid, name=name+'_gate', reuse=reuse)
+    x = x_filter * x_gate
     x = tf.layers.conv2d(x, projection_size, 1, activation=None, name=name+'_proj', reuse=reuse)
     x += prev_x
     return x
