@@ -1,4 +1,5 @@
 import tensorflow as tf
+from tensorflow.python.ops import data_flow_ops
 
 import data
 
@@ -10,7 +11,10 @@ flags.DEFINE_string('lr_flist', 'data/lr.flist', 'Directory to put the training 
 flags.DEFINE_string('model_name', 'model_res', 'Directory to put the training data.')
 
 with tf.Graph().as_default():
-    target_batch, source_batch = data.dataset_hr(FLAGS.hr_flist)
+    target_batch_staging, source_batch_staging = data.dataset_hr(FLAGS.hr_flist)
+    stager = data_flow_ops.StagingArea([tf.float32, tf.float32], shapes=[[None, None, None, 1], [None, None, None, 1]])
+    stage = stager.put([target_batch_staging, source_batch_staging])
+    target_batch, source_batch = stager.get()
     model_def = __import__(FLAGS.model_name)
     predict_batch = model_def.build_model(source_batch)
     loss = tf.losses.mean_squared_error(target_batch, predict_batch)
@@ -28,8 +32,9 @@ with tf.Graph().as_default():
         coord = tf.train.Coordinator()
         threads = tf.train.start_queue_runners(sess=sess, coord=coord)
         try:
+            sess.run(stage)
             while not coord.should_stop():
-                _, training_loss, baseline = sess.run([optimizer, loss, floor])
+                _, _, training_loss, baseline = sess.run([stage, optimizer, loss, floor])
                 print baseline, baseline - training_loss
         except tf.errors.OutOfRangeError:
             print('Done training -- epoch limit reached')
