@@ -29,19 +29,20 @@ def dataset_hr(hr_flist):
     _, image_file = reader.read(filename_queue)
     hr_image = tf.image.decode_image(image_file, channels=3)
     hr_image = tf.expand_dims(hr_image, 0)
-    scale_queue = tf.train.input_producer(scale_list)
-    scale = scale_queue.dequeue()
-    lr_image = tf.image.resize_bicubic(hr_image, tf.shape(hr_image)[1:3] / scale)
+    hr_image = tf.image.convert_image_dtype(hr_image, tf.float32)
     hr_grayscale = tf.image.rgb_to_grayscale(hr_image)
-    lr_grayscale = tf.image.resize_bicubic(tf.image.rgb_to_grayscale(lr_image), tf.shape(hr_image)[1:3])
-    hr_grayscale = uint8_to_float32(hr_grayscale)
-    lr_grayscale = uint8_to_float32(lr_grayscale)
     hr_grayscale_patches = image_to_patches(hr_grayscale, patch_height, patch_width, patch_overlap)
-    lr_grayscale_patches = image_to_patches(lr_grayscale, patch_height, patch_width, patch_overlap)
+    hr_grayscale_patches_list = []
+    lr_grayscale_patches_list = []
+    for scale in scale_list:
+        lr_image = tf.image.resize_bicubic(hr_image, tf.shape(hr_image)[1:3] / scale)
+        lr_grayscale = tf.image.resize_bicubic(tf.image.rgb_to_grayscale(lr_image), tf.shape(hr_image)[1:3])
+        lr_grayscale_patches = image_to_patches(lr_grayscale, patch_height, patch_width, patch_overlap)
+        hr_grayscale_patches_list.append(hr_grayscale_patches)
+        lr_grayscale_patches_list.append(lr_grayscale_patches)
+    hr_grayscale_patches = tf.concat(hr_grayscale_patches_list, 0)
+    lr_grayscale_patches = tf.concat(lr_grayscale_patches_list, 0)
     return hr_grayscale_patches, lr_grayscale_patches
-
-def uint8_to_float32(image):
-    return tf.cast(image, tf.float32) * (1. / 255)
       
 def image_to_patches(image, patch_height, patch_width, patch_overlap):
     patches = tf.extract_image_patches(image, [1, patch_height, patch_width, 1], [1, patch_height - 2 * patch_overlap, patch_width - 2 * patch_overlap, 1], [1, 1, 1, 1], padding='VALID')
