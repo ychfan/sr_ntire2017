@@ -19,7 +19,7 @@ def crop_center(image, target_shape):
 
 with tf.Graph().as_default():
     target_patches, source_patches = data.dataset_hr(FLAGS.hr_flist)
-    target_batch_staging, source_batch_staging = tf.train.shuffle_batch([target_patches, source_patches], FLAGS.batch_size, 8192, 2048, num_threads=4, enqueue_many=True)
+    target_batch_staging, source_batch_staging = tf.train.shuffle_batch([target_patches, source_patches], FLAGS.batch_size, 32768, 8192, num_threads=4, enqueue_many=True)
     stager = data_flow_ops.StagingArea([tf.float32, tf.float32], shapes=[[None, None, None, 1], [None, None, None, 1]])
     stage = stager.put([target_batch_staging, source_batch_staging])
     target_batch, source_batch = stager.get()
