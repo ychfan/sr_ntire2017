@@ -19,12 +19,12 @@ def dataset(hr_flist, lr_flist):
 
 def dataset_hr(hr_flist):
     scale_list = [2, 3, 4]
-    patch_height = 300
-    patch_width = 400
+    patch_height = 110
+    patch_width = 110
     patch_overlap = 10
     with open(hr_flist) as f:
         hr_filename_list = f.read().splitlines()
-    filename_queue = tf.train.string_input_producer(hr_filename_list)
+    filename_queue = tf.train.string_input_producer(hr_filename_list, num_epochs=1)
     reader = tf.WholeFileReader()
     _, image_file = reader.read(filename_queue)
     hr_image = tf.image.decode_image(image_file, channels=3)
