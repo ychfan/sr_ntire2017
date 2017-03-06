@@ -10,8 +10,9 @@ flags.DEFINE_string('hr_flist', 'data/hr.flist', 'file_list put the training dat
 flags.DEFINE_string('lr_flist', 'data/lr.flist', 'Directory to put the training data.')
 flags.DEFINE_string('model_name', 'model_res', 'Directory to put the training data.')
 flags.DEFINE_string('model_file', 'tmp/model_res', 'Directory to put the training data.')
-
-flags.DEFINE_integer('batch_size', '64', 'batch size for training')
+flags.DEFINE_float('learning_rate', '0.001', 'Learning rate for training')
+flags.DEFINE_boolean('adam', True, 'Use adam optimizer for training')
+flags.DEFINE_integer('batch_size', '32', 'batch size for training')
 
 def crop_center(image, target_shape):
     origin_shape = tf.shape(image)[1:3]
@@ -20,7 +21,7 @@ def crop_center(image, target_shape):
 with tf.Graph().as_default():
     target_patches, source_patches = data.dataset_hr(FLAGS.hr_flist)
     target_batch_staging, source_batch_staging = tf.train.shuffle_batch([target_patches, source_patches], FLAGS.batch_size, 32768, 8192, num_threads=4, enqueue_many=True)
-    stager = data_flow_ops.StagingArea([tf.float32, tf.float32], shapes=[[None, None, None, 1], [None, None, None, 1]])
+    stager = data_flow_ops.StagingArea([tf.float32, tf.float32], shapes=[[None, None, None, 3], [None, None, None, 3]])
     stage = stager.put([target_batch_staging, source_batch_staging])
     target_batch, source_batch = stager.get()
     model_def = __import__(FLAGS.model_name)
@@ -29,10 +30,13 @@ with tf.Graph().as_default():
     source_cropped_batch = crop_center(source_batch, tf.shape(res_batch)[1:3])
     loss = tf.losses.mean_squared_error(target_cropped_batch, res_batch + source_cropped_batch)
     floor = tf.losses.mean_squared_error(target_cropped_batch, source_cropped_batch)
-    learning_rate = tf.Variable(0.001, trainable=False)
+    learning_rate = tf.Variable(FLAGS.learning_rate, trainable=False)
     adam_optimizer = tf.train.AdamOptimizer(learning_rate).minimize(loss)
     sgd_optimizer = tf.train.MomentumOptimizer(learning_rate, 0.9).minimize(loss)
-    optimizer = adam_optimizer
+    if FLAGS.adam:
+        optimizer = adam_optimizer
+    else:
+        optimizer = sgd_optimizer
     
     init = tf.global_variables_initializer()
     init_local = tf.local_variables_initializer()
@@ -50,6 +54,7 @@ with tf.Graph().as_default():
         else:
             sess.run(init)
             print 'Model initialized'
+        learning_rate.assign(FLAGS.learning_rate)
         coord = tf.train.Coordinator()
         threads = tf.train.start_queue_runners(sess=sess, coord=coord)
         try:
