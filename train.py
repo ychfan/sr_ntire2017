@@ -6,8 +6,8 @@ import data
 flags = tf.app.flags
 FLAGS = flags.FLAGS
 
-flags.DEFINE_string('hr_flist', 'data/hr.flist', 'file_list put the training data.')
-flags.DEFINE_string('lr_flist', 'data/lr.flist', 'Directory to put the training data.')
+flags.DEFINE_string('hr_flist', 'flist/hr.flist', 'file_list put the training data.')
+flags.DEFINE_string('lr_flist', 'flist/lr.flist', 'Directory to put the training data.')
 flags.DEFINE_string('model_name', 'model_res', 'Directory to put the training data.')
 flags.DEFINE_string('model_file', 'tmp/model_res', 'Directory to put the training data.')
 flags.DEFINE_float('learning_rate', '0.001', 'Learning rate for training')
