@@ -1,13 +1,12 @@
 import tensorflow as tf
 from tensorflow.python.ops import data_flow_ops
 
-import data
-
 flags = tf.app.flags
 FLAGS = flags.FLAGS
 
+flags.DEFINE_string('data_name', 'data_naive_bc', 'Directory to put the training data.')
 flags.DEFINE_string('hr_flist', 'flist/hr.flist', 'file_list put the training data.')
-flags.DEFINE_string('lr_flist', 'flist/lr.flist', 'Directory to put the training data.')
+flags.DEFINE_string('lr_flist', 'flist/lrX2.flist', 'Directory to put the training data.')
 flags.DEFINE_string('model_name', 'model_res', 'Directory to put the training data.')
 flags.DEFINE_string('model_file', 'tmp/model_res', 'Directory to put the training data.')
 flags.DEFINE_float('learning_rate', '0.001', 'Learning rate for training')
@@ -19,7 +18,8 @@ def crop_center(image, target_shape):
     return tf.slice(image, [0, (origin_shape[0] - target_shape[0]) / 2, (origin_shape[1] - target_shape[1]) / 2, 0], [-1, target_shape[0], target_shape[1], -1])
 
 with tf.Graph().as_default():
-    target_patches, source_patches = data.dataset_hr(FLAGS.hr_flist)
+    data = __import__(FLAGS.data_name)
+    target_patches, source_patches = data.dataset(FLAGS.hr_flist, FLAGS.lr_flist)
     target_batch_staging, source_batch_staging = tf.train.shuffle_batch([target_patches, source_patches], FLAGS.batch_size, 32768, 8192, num_threads=4, enqueue_many=True)
     stager = data_flow_ops.StagingArea([tf.float32, tf.float32], shapes=[[None, None, None, 3], [None, None, None, 3]])
     stage = stager.put([target_batch_staging, source_batch_staging])
