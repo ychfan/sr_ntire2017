@@ -6,8 +6,8 @@ FLAGS = flags.FLAGS
 flags.DEFINE_string('hr_flist', 'flist/hr_val.flist', 'file_list put the training data.')
 flags.DEFINE_string('lr_flist', 'flist/lrX2_val.flist', 'Directory to put the training data.')
 flags.DEFINE_integer('scale', '2', 'batch size for training')
-flags.DEFINE_string('model_name', 'model_res', 'Directory to put the training data.')
-flags.DEFINE_string('model_file', 'tmp/model_res', 'Directory to put the training data.')
+flags.DEFINE_string('model_name', 'model_res_pre_act', 'Directory to put the training data.')
+flags.DEFINE_string('model_file', 'tmp/model_res_pre_act-data_naive_nn-try', 'Directory to put the training data.')
 
 def crop_center(image, target_shape):
     origin_shape = tf.shape(image)[1:3]
@@ -25,7 +25,7 @@ with tf.Graph().as_default():
     lr_image = tf.image.convert_image_dtype(lr_image, tf.float32)
     lr_image = tf.expand_dims(lr_image, 0)
     hr_image_shape = tf.shape(lr_image)[1:3] * FLAGS.scale
-    lr_image = tf.image.resize_bicubic(lr_image, hr_image_shape)
+    lr_image = tf.image.resize_nearest_neighbor(lr_image, hr_image_shape)
     lr_image = tf.reshape(lr_image, [1, hr_image_shape[0], hr_image_shape[1], 3])
     boundary_size = 15
     lr_image_padded = tf.pad(lr_image, [[0, 0], [boundary_size, boundary_size], [boundary_size, boundary_size], [0, 0]], mode="SYMMETRIC")
@@ -39,9 +39,7 @@ with tf.Graph().as_default():
     init = tf.global_variables_initializer()
     init_local = tf.local_variables_initializer()
     saver = tf.train.Saver()
-    config = tf.ConfigProto(allow_soft_placement=True)
-    config.gpu_options.allow_growth = True
-    with tf.Session(config=config) as sess:
+    with tf.Session() as sess:
         sess.run(init_local)
         if (tf.gfile.Exists(FLAGS.model_file) or tf.gfile.Exists(FLAGS.model_file + '.index')):
             saver.restore(sess, FLAGS.model_file)
