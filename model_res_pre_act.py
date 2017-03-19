@@ -3,7 +3,7 @@ import tensorflow as tf
 def build_model(x, reuse):
     hidden_size = 128
     bottleneck_size = 32
-    x = conv(x, hidden_size, bottleneck_size, 'conv00', reuse)
+    x = tf.layers.conv2d(x, hidden_size, 9, activation=None, name='in', reuse=reuse)
     for i in range(10):
         x = crop_by_pixel(x, 1) + conv(x, hidden_size, bottleneck_size, 'conv'+str(i), reuse)
     x = tf.layers.conv2d(x, 3, 1, activation=None, name='out', reuse=reuse)
