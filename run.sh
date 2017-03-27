@@ -24,7 +24,7 @@ set -x
 
 EXPR_NAME="try"
 TRAIN_DIR="tmp"
-MODEL_NAME="model_res_pre_act"
+MODEL_NAME="model_res"
 DATA_NAME="data_naive_nn"
 HR_FLIST="flist/hr.flist"
 LR_FLIST="flist/lrX2.flist"
@@ -41,7 +41,7 @@ ARGS="--data_name=$DATA_NAME --hr_flist=$HR_FLIST --lr_flist=$LR_FLIST --model_n
 
 iter=0
 # learning rate 0.001 with adam
-for i in `seq 1 10`;
+for i in `seq 1 3`;
 do
     python train.py $ARGS --model_file_in=$MODEL_FILE-$iter --model_file_out=$MODEL_FILE-$((iter+1)) --learning_rate=0.001
     iter=$((iter+1))

@@ -26,7 +26,7 @@ with tf.Graph().as_default():
     stage = stager.put([target_batch_staging, source_batch_staging])
     target_batch, source_batch = stager.get()
     model_def = __import__(FLAGS.model_name)
-    res_batch = model_def.build_model(source_batch, False)
+    res_batch = model_def.build_model(source_batch, True)
     target_cropped_batch = crop_center(target_batch, tf.shape(res_batch)[1:3])
     source_cropped_batch = crop_center(source_batch, tf.shape(res_batch)[1:3])
     loss = tf.losses.mean_squared_error(target_cropped_batch, res_batch + source_cropped_batch)

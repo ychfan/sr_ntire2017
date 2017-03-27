@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-def build_model(x, reuse):
+def build_model(x, training):
     x = tf.layers.conv2d(x, 64, 3, activation=tf.sigmoid, name='conv1')
     x = tf.layers.conv2d(x, 64, 3, activation=tf.sigmoid, name='conv2')
     x = tf.layers.conv2d(x, 64, 3, activation=tf.sigmoid, name='conv3')
