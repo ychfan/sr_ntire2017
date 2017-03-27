@@ -58,7 +58,7 @@ with tf.Graph().as_default():
                 error_acc += error_per_image
                 acc += 1
         except tf.errors.OutOfRangeError:
-            print('Done training -- epoch limit reached')
+            print('Done validation -- epoch limit reached')
         finally:
             coord.request_stop()
         print error_acc / acc

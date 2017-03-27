@@ -8,7 +8,8 @@ flags.DEFINE_string('data_name', 'data_naive_bc', 'Directory to put the training
 flags.DEFINE_string('hr_flist', 'flist/hr.flist', 'file_list put the training data.')
 flags.DEFINE_string('lr_flist', 'flist/lrX2.flist', 'Directory to put the training data.')
 flags.DEFINE_string('model_name', 'model_res', 'Directory to put the training data.')
-flags.DEFINE_string('model_file', 'tmp/model_res', 'Directory to put the training data.')
+flags.DEFINE_string('model_file_in', 'tmp/model_res', 'Directory to put the training data.')
+flags.DEFINE_string('model_file_out', 'tmp/model_res', 'Directory to put the training data.')
 flags.DEFINE_float('learning_rate', '0.001', 'Learning rate for training')
 flags.DEFINE_boolean('adam', True, 'Use adam optimizer for training')
 flags.DEFINE_integer('batch_size', '32', 'batch size for training')
@@ -48,9 +49,12 @@ with tf.Graph().as_default():
     config.gpu_options.allow_growth = True
     with tf.Session(config=config) as sess:
         sess.run(init_local)
-        if (tf.gfile.Exists(FLAGS.model_file) or tf.gfile.Exists(FLAGS.model_file + '.index')):
-            saver.restore(sess, FLAGS.model_file)
-            print 'Model restored from ' + FLAGS.model_file
+        if (tf.gfile.Exists(FLAGS.model_file_out) or tf.gfile.Exists(FLAGS.model_file_out + '.index')):
+            print 'Model exists'
+            quit()
+        if (tf.gfile.Exists(FLAGS.model_file_in) or tf.gfile.Exists(FLAGS.model_file_in + '.index')):
+            saver.restore(sess, FLAGS.model_file_in)
+            print 'Model restored from ' + FLAGS.model_file_in
         else:
             sess.run(init)
             print 'Model initialized'
@@ -65,10 +69,12 @@ with tf.Graph().as_default():
                 loss_acc += training_loss
                 baseline_acc += baseline
                 acc += 1
+                if (acc % 100000 == 0):
+                    saver.save(sess, FLAGS.model_file_out + '-' + str(acc))
         except tf.errors.OutOfRangeError:
             print('Done training -- epoch limit reached')
         finally:
             coord.request_stop()
         print loss_acc / acc, baseline_acc / acc
-        saver.save(sess, FLAGS.model_file)
-        print 'Model saved to ' + FLAGS.model_file
+        saver.save(sess, FLAGS.model_file_out)
+        print 'Model saved to ' + FLAGS.model_file_out

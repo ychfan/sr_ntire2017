@@ -25,24 +25,33 @@ set -x
 EXPR_NAME="try"
 TRAIN_DIR="tmp"
 MODEL_NAME="model_res_pre_act"
-DATA_NAME="data_naive_bc"
+DATA_NAME="data_naive_nn"
 HR_FLIST="flist/hr.flist"
 LR_FLIST="flist/lrX2.flist"
 
-source /data/jl_1/shared/ifp/envs/ifp-tf-master/bin/activate
-export CUDA_VISIBLE_DEVICES=`echo $SGE_HGR_gpu | sed 's/GPU//g' | awk -F ' ' '{for(i=1;i<NF;++i)printf "%i,",$i-1; printf "%i",$NF-1}'`
-#export CUDA_VISIBLE_DEVICES=0
+if [! $?SGE_HGR_gpu ]; then
+  source /data/jl_1/shared/ifp/envs/ifp-tf-master/bin/activate
+  export CUDA_VISIBLE_DEVICES=`echo $SGE_HGR_gpu | sed 's/GPU//g' | awk -F ' ' '{for(i=1;i<NF;++i)printf "%i,",$i-1; printf "%i",$NF-1}'`
+else
+  export CUDA_VISIBLE_DEVICES=0
+fi
 
 MODEL_FILE="$TRAIN_DIR/$MODEL_NAME-$DATA_NAME-$EXPR_NAME"
-ARGS="--data_name=$DATA_NAME --hr_flist=$HR_FLIST --lr_flist=$LR_FLIST --model_name=$MODEL_NAME --model_file=$MODEL_FILE"
+ARGS="--data_name=$DATA_NAME --hr_flist=$HR_FLIST --lr_flist=$LR_FLIST --model_name=$MODEL_NAME"
+
+iter=0
 # learning rate 0.001 with adam
 for i in `seq 1 10`;
 do
-    python train.py $ARGS --learning_rate=0.001
+    python train.py $ARGS --model_file_in=$MODEL_FILE-$iter --model_file_out=$MODEL_FILE-$((iter+1)) --learning_rate=0.001
+    iter=$((iter+1))
+    echo "Iteration $iter Finished"
 done
 
 # learning rate 0.0001 with adam
 for i in `seq 1 2`;
 do
-    python train.py $ARGS --learning_rate=0.0001
+    python train.py $ARGS --model_file_in=$MODEL_FILE-$iter --model_file_out=$MODEL_FILE-$((iter+1)) --learning_rate=0.0001
+    iter=$((iter+1))
+    echo "Iteration $iter Finished"
 done
