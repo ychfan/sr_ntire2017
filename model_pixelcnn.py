@@ -1,11 +1,14 @@
 import tensorflow as tf
+import util
 
-def build_model(x, training):
+upsample = False
+
+def build_model(x, scale, training):
     hidden_size = 128
     projection_size = 32
     x = conv_gated(x, hidden_size, projection_size, 'conv00', False)
     for i in range(10):
-        x = crop_by_pixel(x, 1) + conv_gated(x, hidden_size, projection_size, 'conv'+str(i), False)
+        x = util.crop_by_pixel(x, 1) + conv_gated(x, hidden_size, projection_size, 'conv'+str(i), False)
     x = tf.layers.conv2d(x, 3, 1, activation=None, name='out')
     return x
 
@@ -15,7 +18,3 @@ def conv_gated(x, hidden_size, projection_size, name, reuse):
     x = x_filter * x_gate
     x = tf.layers.conv2d(x, projection_size, 1, activation=None, name=name+'_proj', reuse=reuse)
     return x
-
-def crop_by_pixel(x, num):
-    shape = tf.shape(x)[1:3]
-    return tf.slice(x, [0, num, num, 0], [-1, shape[0] - 2 * num, shape[1] - 2 * num, -1])

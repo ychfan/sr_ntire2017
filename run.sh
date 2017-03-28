@@ -24,12 +24,13 @@ set -x
 
 EXPR_NAME="try"
 TRAIN_DIR="tmp"
-MODEL_NAME="model_res"
-DATA_NAME="data_naive_nn"
+MODEL_NAME="model_resnet"
+DATA_NAME="data_resize"
 HR_FLIST="flist/hr.flist"
 LR_FLIST="flist/lrX2.flist"
+SCALE=2
 
-if [! $?SGE_HGR_gpu ]; then
+if [ -n "$SGE_HGR_gpu" ]; then
   source /data/jl_1/shared/ifp/envs/ifp-tf-master/bin/activate
   export CUDA_VISIBLE_DEVICES=`echo $SGE_HGR_gpu | sed 's/GPU//g' | awk -F ' ' '{for(i=1;i<NF;++i)printf "%i,",$i-1; printf "%i",$NF-1}'`
 else
@@ -37,7 +38,7 @@ else
 fi
 
 MODEL_FILE="$TRAIN_DIR/$MODEL_NAME-$DATA_NAME-$EXPR_NAME"
-ARGS="--data_name=$DATA_NAME --hr_flist=$HR_FLIST --lr_flist=$LR_FLIST --model_name=$MODEL_NAME"
+ARGS="--data_name=$DATA_NAME --hr_flist=$HR_FLIST --lr_flist=$LR_FLIST --model_name=$MODEL_NAME --scale=$SCALE"
 
 iter=0
 # learning rate 0.001 with adam

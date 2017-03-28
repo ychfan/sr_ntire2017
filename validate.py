@@ -1,16 +1,21 @@
 import tensorflow as tf
+import util
 
 flags = tf.app.flags
 FLAGS = flags.FLAGS
 
-flags.DEFINE_string('hr_flist', 'flist/hr.flist', 'file_list put the training data.')
-flags.DEFINE_string('lr_flist', 'flist/lrX2.flist', 'Directory to put the training data.')
-flags.DEFINE_string('model_name', 'model_res_pre_act', 'Directory to put the training data.')
-flags.DEFINE_string('model_file', 'tmp/model_res_pre_act-data_naive_nn-try', 'Directory to put the training data.')
+flags.DEFINE_string('data_name', 'data_resize', 'Directory to put the training data.')
+flags.DEFINE_string('hr_flist', 'flist/set5_hr.flist', 'file_list put the training data.')
+flags.DEFINE_string('lr_flist', 'flist/set5_lrX2.flist', 'Directory to put the training data.')
+flags.DEFINE_integer('scale', '2', 'batch size for training')
+flags.DEFINE_string('model_name', 'model_conv', 'Directory to put the training data.')
+flags.DEFINE_string('model_file', 'tmp/model_conv', 'Directory to put the training data.')
 
-def crop_center(image, target_shape):
-    origin_shape = tf.shape(image)[1:3]
-    return tf.slice(image, [0, (origin_shape[0] - target_shape[0]) / 2, (origin_shape[1] - target_shape[1]) / 2, 0], [-1, target_shape[0], target_shape[1], -1])
+data = __import__(FLAGS.data_name)
+model = __import__(FLAGS.model_name)
+if ((data.resize_func is None) != model.upsample):
+    print "Config Error"
+    quit()
 
 with tf.Graph().as_default():
     with open(FLAGS.hr_flist) as f:
@@ -27,13 +32,12 @@ with tf.Graph().as_default():
     hr_image = tf.expand_dims(hr_image, 0)
     lr_image = tf.expand_dims(lr_image, 0)
     hr_image_shape = tf.shape(hr_image)[1:3]
-    lr_image = tf.image.resize_nearest_neighbor(lr_image, hr_image_shape)
+    if (data.resize_func is not None):
+        lr_image = data.resize_func(lr_image, hr_image_shape)
     lr_image = tf.reshape(lr_image, [1, hr_image_shape[0], hr_image_shape[1], 3])
-    boundary_size = 15
-    lr_image_padded = tf.pad(lr_image, [[0, 0], [boundary_size, boundary_size], [boundary_size, boundary_size], [0, 0]], mode="SYMMETRIC")
-    model_def = __import__(FLAGS.model_name)
-    res = model_def.build_model(lr_image_padded, False)
-    lr_image = lr_image + crop_center(res, hr_image_shape)
+    lr_image = util.pad_boundary(lr_image)
+    lr_image = model.build_model(lr_image, FLAGS.scale, False)
+    lr_image = util.crop_center(lr_image, hr_image_shape)
     error = tf.losses.mean_squared_error(hr_image, lr_image)
     
     init = tf.global_variables_initializer()
