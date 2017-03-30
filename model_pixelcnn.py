@@ -3,13 +3,13 @@ import util
 
 upsample = False
 
-def build_model(x, scale, training):
+def build_model(x, scale, training, reuse):
     hidden_size = 128
     projection_size = 32
-    x = conv_gated(x, hidden_size, projection_size, 'conv00', False)
+    x = conv_gated(x, hidden_size, projection_size, 'conv00', reuse)
     for i in range(10):
-        x = util.crop_by_pixel(x, 1) + conv_gated(x, hidden_size, projection_size, 'conv'+str(i), False)
-    x = tf.layers.conv2d(x, 3, 1, activation=None, name='out')
+        x = util.crop_by_pixel(x, 1) + conv_gated(x, hidden_size, projection_size, 'conv'+str(i), reuse)
+    x = tf.layers.conv2d(x, 3, 1, activation=None, name='out', reuse=reuse)
     return x
 
 def conv_gated(x, hidden_size, projection_size, name, reuse):

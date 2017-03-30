@@ -28,7 +28,7 @@ with tf.Graph().as_default():
     stager = data_flow_ops.StagingArea([tf.float32, tf.float32], shapes=[[None, None, None, 3], [None, None, None, 3]])
     stage = stager.put([target_batch_staging, source_batch_staging])
     target_batch, source_batch = stager.get()
-    predict_batch = model.build_model(source_batch, FLAGS.scale, True)
+    predict_batch = model.build_model(source_batch, FLAGS.scale, training=True, reuse=False)
     target_cropped_batch = util.crop_center(target_batch, tf.shape(predict_batch)[1:3])
     loss = tf.losses.mean_squared_error(target_cropped_batch, predict_batch)
     optimizer = tf.train.AdamOptimizer(FLAGS.learning_rate).minimize(loss)

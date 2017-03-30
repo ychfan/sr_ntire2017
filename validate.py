@@ -39,7 +39,7 @@ with tf.Graph().as_default():
     else:
         lr_image = tf.reshape(lr_image, [1, lr_image_shape[0], lr_image_shape[1], 3])
     lr_image = util.pad_boundary(lr_image)
-    lr_image = model.build_model(lr_image, FLAGS.scale, False)
+    lr_image = model.build_model(lr_image, FLAGS.scale, training=False, reuse=False)
     lr_image = util.crop_center(lr_image, hr_image_shape)
     error = tf.losses.mean_squared_error(hr_image, lr_image)
     

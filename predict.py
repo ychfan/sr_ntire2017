@@ -36,7 +36,7 @@ with tf.Graph().as_default():
     else:
         lr_image = tf.reshape(lr_image, [1, lr_image_shape[0], lr_image_shape[1], 3])
     lr_image = util.pad_boundary(lr_image)
-    hr_image = model.build_model(lr_image, FLAGS.scale, False)
+    hr_image = model.build_model(lr_image, FLAGS.scale, training=False, reuse=False)
     hr_image = util.crop_center(hr_image, hr_image_shape)
     hr_image = tf.image.convert_image_dtype(hr_image, tf.uint8, saturate=True)
     hr_image = tf.reshape(hr_image, [hr_image_shape[0], hr_image_shape[1], 3])
