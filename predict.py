@@ -28,10 +28,13 @@ with tf.Graph().as_default():
     lr_image = tf.image.decode_image(image_file, channels=3)
     lr_image = tf.image.convert_image_dtype(lr_image, tf.float32)
     lr_image = tf.expand_dims(lr_image, 0)
-    hr_image_shape = tf.shape(lr_image)[1:3] * FLAGS.scale
+    lr_image_shape = tf.shape(lr_image)[1:3]
+    hr_image_shape = lr_image_shape * FLAGS.scale
     if (data.resize_func is not None):
         lr_image = data.resize_func(lr_image, hr_image_shape)
-    lr_image = tf.reshape(lr_image, [1, hr_image_shape[0], hr_image_shape[1], 3])
+        lr_image = tf.reshape(lr_image, [1, hr_image_shape[0], hr_image_shape[1], 3])
+    else:
+        lr_image = tf.reshape(lr_image, [1, lr_image_shape[0], lr_image_shape[1], 3])
     lr_image = util.pad_boundary(lr_image)
     hr_image = model.build_model(lr_image, FLAGS.scale, False)
     hr_image = util.crop_center(hr_image, hr_image_shape)
