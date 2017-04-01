@@ -1,5 +1,7 @@
 import tensorflow as tf
 
+resize_func = tf.image.resize_nearest_neighbor
+
 def image_to_patches(image, scale=1):
     patch_height = 108 / scale
     patch_width = 108 / scale

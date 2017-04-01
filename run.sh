@@ -25,7 +25,7 @@ set -x
 EXPR_NAME="try"
 TRAIN_DIR="tmp"
 MODEL_NAME="model_resnet"
-DATA_NAME="data_resize"
+DATA_NAME="data_resize_residual"
 HR_FLIST="flist/hr.flist"
 LR_FLIST="flist/lrX2.flist"
 SCALE=2

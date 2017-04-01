@@ -5,7 +5,7 @@ import util
 flags = tf.app.flags
 FLAGS = flags.FLAGS
 
-flags.DEFINE_string('data_name', 'data_resize', 'Directory to put the training data.')
+flags.DEFINE_string('data_name', 'data_resize_residual', 'Directory to put the training data.')
 flags.DEFINE_string('hr_flist', 'flist/hr_debug.flist', 'file_list put the training data.')
 flags.DEFINE_string('lr_flist', 'flist/lrX2_debug.flist', 'Directory to put the training data.')
 flags.DEFINE_integer('scale', '2', 'batch size for training')
@@ -17,7 +17,7 @@ flags.DEFINE_integer('batch_size', '32', 'batch size for training')
 
 data = __import__(FLAGS.data_name)
 model = __import__(FLAGS.model_name)
-if ((data.resize_func is None) != model.upsample):
+if (data.resize == model.upsample):
     print "Config Error"
     quit()
 
