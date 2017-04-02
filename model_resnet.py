@@ -13,15 +13,12 @@ def build_model(x, scale, training, reuse):
     return x
 
 def conv(x, hidden_size, bottleneck_size, training, name, reuse):
-    x = tf.layers.batch_normalization(x, training=training, name=name+'_norm_proj', reuse=reuse)
     x = tf.nn.relu(x)
     x = tf.layers.conv2d(x, bottleneck_size, 1, activation=None, name=name+'_proj', reuse=reuse)
     
-    x = tf.layers.batch_normalization(x, training=training, name=name+'_norm_filt', reuse=reuse)
     x = tf.nn.relu(x)
     x = tf.layers.conv2d(x, bottleneck_size, 3, activation=None, name=name+'_filt', reuse=reuse)
     
-    x = tf.layers.batch_normalization(x, training=training, name=name+'_norm_recv', reuse=reuse)
     x = tf.nn.relu(x)
     x = tf.layers.conv2d(x, hidden_size, 1, activation=None, name=name+'_recv', reuse=reuse)
     return x
