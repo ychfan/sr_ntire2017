@@ -20,7 +20,7 @@ flags.DEFINE_boolean('mem_growth', True, 'If true, use gpu memory on demand.')
 
 data = __import__(FLAGS.data_name)
 model = __import__(FLAGS.model_name)
-if ((data.resize_func is None) != model.upsample):
+if (data.resize == model.upsample):
     print "Config Error"
     quit()
 
