@@ -12,13 +12,13 @@ flags.DEFINE_string('hr_flist', 'flist/hr.flist',
 flags.DEFINE_string('lr_flist', 'flist/lrX2.flist',
                     'Directory to put the training data.')
 flags.DEFINE_integer('scale', '2', 'batch size for training')
-flags.DEFINE_string('model_name', 'model_share_resnet_up',
+flags.DEFINE_string('model_name', 'model_resnet_up',
                     'Directory to put the training data.')
-flags.DEFINE_string('model_file_in', 'tmp/model_share',
+flags.DEFINE_string('model_file_in', 'tmp/model_conv',
                     'Directory to put the training data.')
-flags.DEFINE_string('model_file_out', 'tmp/model_share',
+flags.DEFINE_string('model_file_out', 'tmp/model_conv',
                     'Directory to put the training data.')
-flags.DEFINE_float('learning_rate', '0.001', 'Learning rate for training')
+flags.DEFINE_float('learning_rate', '10.', 'Learning rate for training')
 flags.DEFINE_integer('batch_size', '32', 'batch size for training')
 flags.DEFINE_float('ohnm', '1.0', 'percentage of hard negatives')
 
@@ -48,7 +48,6 @@ with tf.Graph().as_default():
         source_batch, FLAGS.scale, training=True, reuse=False)
     target_cropped_batch = util.crop_center(target_batch,
                                             tf.shape(predict_batch)[1:3])
-    loss = tf.losses.mean_squared_error(target_cropped_batch, predict_batch)
 
     if FLAGS.ohnm < 1.0:
         # compute l2 loss and flatten it to 1d array.
@@ -59,11 +58,14 @@ with tf.Graph().as_default():
         num_negative = tf.cast(
             tf.to_float(num_ele) * tf.constant(FLAGS.ohnm), tf.int32)
         hard_negative, _ = tf.nn.top_k(raw_loss, num_negative)
-        hard_negative_loss = tf.reduce_mean(hard_negative)
-        optimizer = tf.train.AdamOptimizer(FLAGS.learning_rate).minimize(
-            hard_negative_loss)
+        loss = tf.reduce_mean(hard_negative)
     else:
-        optimizer = tf.train.AdamOptimizer(FLAGS.learning_rate).minimize(loss)
+        loss = tf.losses.mean_squared_error(target_cropped_batch, predict_batch)
+
+    optimizer = tf.train.AdamOptimizer(FLAGS.learning_rate)
+    gvs = optimizer.compute_gradients(loss)
+    capped_gvs = [(tf.clip_by_value(grad, -1., 1.), var) for grad, var in gvs]
+    optimizer = optimizer.apply_gradients(capped_gvs)
 
     init = tf.global_variables_initializer()
     init_local = tf.local_variables_initializer()
@@ -90,7 +92,7 @@ with tf.Graph().as_default():
         try:
             sess.run(stage)
             while not coord.should_stop():
-                _, _, training_loss, training_hard_loss = sess.run(
+                _, _, training_loss = sess.run(
                     [stage, optimizer, loss])
                 print training_loss, acc
                 loss_acc += training_loss
