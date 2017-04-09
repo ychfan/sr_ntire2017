@@ -43,8 +43,5 @@ def make_patches(hr_image, lr_image, scale, resize):
 def flip(img_list):
     flipped_list = []
     for img in img_list:
-        flipped_list.append(img)
-        flipped_list.append(tf.image.flip_left_right(img))
-        flipped_list.append(tf.image.flip_up_down(img))
-        flipped_list.append(tf.image.rot90(img, k=2))
+        flipped_list.append(tf.image.random_flip_up_down(tf.image.random_flip_left_right(img, seed=0), seed=0))
     return flipped_list
