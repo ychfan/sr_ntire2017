@@ -20,7 +20,10 @@ def build_model(x, scale, training, reuse):
 def conv(x, hidden_size, bottleneck_size, training, name, reuse):
     x = util.lrelu(x)
     x = tf.layers.conv2d(x, bottleneck_size, 1, activation=None, name=name+'_proj', reuse=reuse)
-    
+
     x = util.lrelu(x)
-    x = tf.layers.conv2d(x, hidden_size, 3, activation=None, name=name+'_filt', reuse=reuse)
+    x = tf.layers.conv2d(x, hidden_size * 2, 3, activation=None, name=name+'_filt', reuse=reuse)
+    x, y = tf.split(x, 2, 3)
+    x = x * tf.nn.sigmoid(x)
+
     return x
