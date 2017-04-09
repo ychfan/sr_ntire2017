@@ -24,8 +24,8 @@ set -x
 
 EXPR_NAME="try"
 TRAIN_DIR="tmp"
-MODEL_NAME="model_resnet"
-DATA_NAME="data_resize_residual"
+MODEL_NAME="model_resnet_up"
+DATA_NAME="data_residual"
 HR_FLIST="flist/hr.flist"
 LR_FLIST="flist/lrX2.flist"
 SCALE=2
@@ -33,8 +33,8 @@ LEARNING_RATE=0.001
 
 SCRIPT="train.py"
 if [ -n "$SGE_HGR_gpu" ]; then
-  source /data/jl_1/shared/ifp/envs/ifp-tf-master/bin/activate
-  export LD_LIBRARY_PATH="/home/jl/ifp/yfan/cudnn/lib64":$LD_LIBRARY_PATH
+  source ~/tensorflow/bin/activate
+  export LD_LIBRARY_PATH="/home/jl/ifp/yfan/cudnn/lib64":"/usr/local/cuda-8.0/lib64":$LD_LIBRARY_PATH
   export CUDA_VISIBLE_DEVICES=`echo $SGE_HGR_gpu | sed 's/GPU//g' | awk -F ' ' '{for(i=1;i<NF;++i)printf "%i,",$i-1; printf "%i",$NF-1}'`
   GPU_NUM=`echo $SGE_HGR_gpu | sed 's/GPU//g' | awk -F ' ' '{printf "%i",NF}'`
   if [ $GPU_NUM -gt 1 ]; then
