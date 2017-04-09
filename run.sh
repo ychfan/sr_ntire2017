@@ -29,6 +29,7 @@ DATA_NAME="data_resize_residual"
 HR_FLIST="flist/hr.flist"
 LR_FLIST="flist/lrX2.flist"
 SCALE=2
+LEARNING_RATE=0.001
 
 SCRIPT="train.py"
 if [ -n "$SGE_HGR_gpu" ]; then
@@ -37,7 +38,7 @@ if [ -n "$SGE_HGR_gpu" ]; then
   export CUDA_VISIBLE_DEVICES=`echo $SGE_HGR_gpu | sed 's/GPU//g' | awk -F ' ' '{for(i=1;i<NF;++i)printf "%i,",$i-1; printf "%i",$NF-1}'`
   GPU_NUM=`echo $SGE_HGR_gpu | sed 's/GPU//g' | awk -F ' ' '{printf "%i",NF}'`
   if [ $GPU_NUM -gt 1 ]; then
-    SCRIPT="train_multi_async.py --gpu_num=$GPU_NUM --mem_growth=False"
+    SCRIPT="train_multi_sync.py --gpu_num=$GPU_NUM --mem_growth=False"
   fi
 else
   export CUDA_VISIBLE_DEVICES=0
@@ -47,18 +48,11 @@ MODEL_FILE="$TRAIN_DIR/$MODEL_NAME-$DATA_NAME-$EXPR_NAME"
 ARGS="--data_name=$DATA_NAME --hr_flist=$HR_FLIST --lr_flist=$LR_FLIST --model_name=$MODEL_NAME --scale=$SCALE"
 
 iter=0
-# learning rate 0.001 with adam
-for i in `seq 1 3`;
+rate=$LEARNING_RATE
+for i in `seq 1 8`;
 do
-    python $SCRIPT $ARGS --model_file_in=$MODEL_FILE-$iter --model_file_out=$MODEL_FILE-$((iter+1)) --learning_rate=0.001
+    python $SCRIPT $ARGS --model_file_in=$MODEL_FILE-$iter --model_file_out=$MODEL_FILE-$((iter+1)) --learning_rate=$rate
     iter=$((iter+1))
-    echo "Iteration $iter Finished"
-done
-
-# learning rate 0.0001 with adam
-for i in `seq 1 2`;
-do
-    python $SCRIPT $ARGS --model_file_in=$MODEL_FILE-$iter --model_file_out=$MODEL_FILE-$((iter+1)) --learning_rate=0.0001
-    iter=$((iter+1))
+    rate=$(echo "$rate" | awk '{print $1*0.5}')
     echo "Iteration $iter Finished"
 done
