@@ -1,4 +1,17 @@
 import tensorflow as tf
+import numpy as np
+import scipy.misc
+
+def resize_func_scipy(image, target_shape):
+    def resize_batch(image, target_shape):
+        resized = []
+        for i in range(image.shape[0]):
+            resized.append(scipy.misc.imresize(image[i], target_shape, interp='bicubic'))
+        return np.stack(resized)
+    image = tf.image.convert_image_dtype(image, tf.uint8, saturate=True)
+    image = tf.py_func(resize_batch, [image, target_shape], tf.uint8, stateful=False)
+    image = tf.image.convert_image_dtype(image, tf.float32)
+    return image
 
 resize_func = tf.image.resize_nearest_neighbor
 
@@ -19,3 +32,9 @@ def crop_by_pixel(x, num):
 
 def pad_boundary(image, boundary_size=15):
     return tf.pad(image, [[0, 0], [boundary_size, boundary_size], [boundary_size, boundary_size], [0, 0]], mode="SYMMETRIC")
+
+def lrelu(x, leak=0.2, name="lrelu"):
+    with tf.variable_scope(name):
+        f1 = 0.5 * (1 + leak)
+        f2 = 0.5 * (1 - leak)
+        return f1 * x + f2 * abs(x)
