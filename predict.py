@@ -4,9 +4,9 @@ import util
 flags = tf.app.flags
 FLAGS = flags.FLAGS
 
-flags.DEFINE_string('data_name', 'data_resize_residual', 'Directory to put the training data.')
-flags.DEFINE_string('hr_flist', 'flist/set5_predict.flist', 'file_list put the training data.')
-flags.DEFINE_string('lr_flist', 'flist/set5_lrX2.flist', 'Directory to put the training data.')
+flags.DEFINE_string('data_name', 'data_residual', 'Directory to put the training data.')
+flags.DEFINE_string('hr_flist', 'flist/hr_val.flist', 'file_list put the training data.')
+flags.DEFINE_string('lr_flist', 'flist/lrX2_val.flist', 'Directory to put the training data.')
 flags.DEFINE_integer('scale', '2', 'batch size for training')
 flags.DEFINE_string('model_name', 'model_conv', 'Directory to put the training data.')
 flags.DEFINE_string('model_file', 'tmp/model_conv', 'Directory to put the training data.')
@@ -43,7 +43,8 @@ with tf.Graph().as_default():
             hr_image += lr_image
         else:
             hr_image += util.resize_func(lr_image, hr_image_shape)
-    hr_image = tf.image.convert_image_dtype(hr_image, tf.uint8, saturate=True)
+    hr_image = hr_image * tf.uint8.max + 0.5
+    hr_image = tf.saturate_cast(hr_image, tf.uint8)
     hr_image = tf.reshape(hr_image, [hr_image_shape[0], hr_image_shape[1], 3])
     hr_image = tf.image.encode_png(hr_image)
     
