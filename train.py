@@ -18,9 +18,10 @@ flags.DEFINE_string('model_file_in', 'tmp/model_conv',
                     'Directory to put the training data.')
 flags.DEFINE_string('model_file_out', 'tmp/model_conv',
                     'Directory to put the training data.')
-flags.DEFINE_float('learning_rate', '10.', 'Learning rate for training')
+flags.DEFINE_float('learning_rate', '0.001', 'Learning rate for training')
 flags.DEFINE_integer('batch_size', '32', 'batch size for training')
 flags.DEFINE_float('ohnm', '1.0', 'percentage of hard negatives')
+flags.DEFINE_float('precision', '0.0', 'threshld to ignore error')
 
 data = __import__(FLAGS.data_name)
 model = __import__(FLAGS.model_name)
@@ -60,7 +61,10 @@ with tf.Graph().as_default():
         hard_negative, _ = tf.nn.top_k(raw_loss, num_negative)
         loss = tf.reduce_mean(hard_negative)
     else:
-        loss = tf.losses.mean_squared_error(target_cropped_batch, predict_batch)
+        if FLAGS.precision > 0:
+            loss = tf.reduce_mean(tf.square(tf.nn.relu(tf.abs(target_cropped_batch - predict_batch) - FLAGS.precision / tf.uint8.max)))
+        else:
+            loss = tf.losses.mean_squared_error(target_cropped_batch, predict_batch)
 
     optimizer = tf.train.AdamOptimizer(FLAGS.learning_rate)
     gvs = optimizer.compute_gradients(loss)
