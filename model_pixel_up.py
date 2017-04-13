@@ -10,7 +10,16 @@ def build_model(x, scale, training, reuse):
     for i in range(6):
         x = util.crop_by_pixel(x, 1) + conv(x, hidden_size, bottleneck_size, training, 'lr_conv'+str(i), reuse)
     x = util.lrelu(x)
-    x = tf.image.resize_nearest_neighbor(x, tf.shape(x)[1:3] * scale) + tf.layers.conv2d_transpose(x, hidden_size, scale, strides=scale, activation=None, name='up', reuse=reuse)
+    if (scale == 4):
+        scale = 2
+        x = tf.layers.conv2d_transpose(x, hidden_size, scale, strides=scale, activation=None, name='up1', reuse=reuse)
+        x = util.crop_by_pixel(x, 1) + conv(x, hidden_size, bottleneck_size, training, 'up_conv', reuse)
+        x = util.lrelu(x)
+        hidden_size = 64
+        x = tf.layers.conv2d_transpose(x, hidden_size, scale, strides=scale, activation=None, name='up2', reuse=reuse)
+    else:
+        hidden_size = 64
+        x = tf.layers.conv2d_transpose(x, hidden_size, scale, strides=scale, activation=None, name='up', reuse=reuse)
     for i in range(4):
         x = util.crop_by_pixel(x, 1) + conv(x, hidden_size, bottleneck_size, training, 'hr_conv'+str(i), reuse)
     x = util.lrelu(x)

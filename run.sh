@@ -24,10 +24,10 @@ set -x
 
 EXPR_NAME="try"
 TRAIN_DIR="tmp"
-MODEL_NAME="model_resnet_up"
+MODEL_NAME="model_pixel_up"
 DATA_NAME="data_residual"
-HR_FLIST="flist/hr.flist"
-LR_FLIST="flist/lrX2.flist"
+HR_FLIST="flist/hr_tv.flist"
+LR_FLIST="flist/lrX2_bicubic_tv.flist"
 SCALE=2
 LEARNING_RATE=0.001
 
@@ -49,10 +49,10 @@ ARGS="--data_name=$DATA_NAME --hr_flist=$HR_FLIST --lr_flist=$LR_FLIST --model_n
 
 iter=0
 rate=$LEARNING_RATE
-for i in `seq 1 8`;
+for i in `seq 1 16`;
 do
     python $SCRIPT $ARGS --model_file_in=$MODEL_FILE-$iter --model_file_out=$MODEL_FILE-$((iter+1)) --learning_rate=$rate
     iter=$((iter+1))
-    rate=$(echo "$rate" | awk '{print $1*0.5}')
+    rate=$(echo "$rate" | awk '{print $1*0.618}')
     echo "Iteration $iter Finished"
 done
