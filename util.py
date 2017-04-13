@@ -13,7 +13,8 @@ def resize_func_scipy(image, target_shape):
     image = tf.image.convert_image_dtype(image, tf.float32)
     return image
 
-resize_func = tf.image.resize_nearest_neighbor
+#resize_func = tf.image.resize_nearest_neighbor
+resize_func = resize_func_scipy
 
 def image_to_patches(image, scale=1):
     patch_height = 108 / scale
