@@ -20,8 +20,7 @@ flags.DEFINE_string('model_file_out', 'tmp/model_conv',
                     'Directory to put the training data.')
 flags.DEFINE_float('learning_rate', '0.001', 'Learning rate for training')
 flags.DEFINE_integer('batch_size', '32', 'batch size for training')
-flags.DEFINE_float('ohnm', '1.0', 'percentage of hard negatives')
-flags.DEFINE_float('precision', '0.0', 'threshld to ignore error')
+flags.DEFINE_boolean('mem_growth', True, 'If true, use gpu memory on demand.')
 
 data = __import__(FLAGS.data_name)
 model = __import__(FLAGS.model_name)
@@ -49,27 +48,8 @@ with tf.Graph().as_default():
         source_batch, FLAGS.scale, training=True, reuse=False)
     target_cropped_batch = util.crop_center(target_batch,
                                             tf.shape(predict_batch)[1:3])
-
-    if FLAGS.ohnm < 1.0:
-        # compute l2 loss and flatten it to 1d array.
-        raw_loss = tf.reshape(
-            (tf.square(tf.subtract(target_cropped_batch, predict_batch))),
-            [-1])
-        num_ele = tf.size(raw_loss)
-        num_negative = tf.cast(
-            tf.to_float(num_ele) * tf.constant(FLAGS.ohnm), tf.int32)
-        hard_negative, _ = tf.nn.top_k(raw_loss, num_negative)
-        loss = tf.reduce_mean(hard_negative)
-    else:
-        if FLAGS.precision > 0:
-            loss = tf.reduce_mean(tf.square(tf.nn.relu(tf.abs(target_cropped_batch - predict_batch) - FLAGS.precision / tf.uint8.max)))
-        else:
-            loss = tf.losses.mean_squared_error(target_cropped_batch, predict_batch)
-
-    optimizer = tf.train.AdamOptimizer(FLAGS.learning_rate)
-    gvs = optimizer.compute_gradients(loss)
-    capped_gvs = [(tf.clip_by_value(grad, -1., 1.), var) for grad, var in gvs]
-    optimizer = optimizer.apply_gradients(capped_gvs)
+    loss = tf.losses.mean_squared_error(target_cropped_batch, predict_batch)
+    optimizer = tf.train.AdamOptimizer(FLAGS.learning_rate).minimize(loss)
 
     init = tf.global_variables_initializer()
     init_local = tf.local_variables_initializer()
@@ -77,7 +57,7 @@ with tf.Graph().as_default():
     loss_acc = .0
     acc = 0
     config = tf.ConfigProto(allow_soft_placement=True)
-    config.gpu_options.allow_growth = True
+    config.gpu_options.allow_growth = FLAGS.mem_growth
     with tf.Session(config=config) as sess:
         sess.run(init_local)
         if (tf.gfile.Exists(FLAGS.model_file_out) or
