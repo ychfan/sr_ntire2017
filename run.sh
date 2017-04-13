@@ -33,10 +33,11 @@ LEARNING_RATE=0.001
 
 SCRIPT="train.py"
 if [ -n "$SGE_HGR_gpu" ]; then
-  source ~/tensorflow/bin/activate
-  export LD_LIBRARY_PATH="/home/jl/ifp/yfan/cudnn/lib64":"/usr/local/cuda-8.0/lib64":$LD_LIBRARY_PATH
+  export PATH="/home/jl/ifp/yfan/anaconda2/bin:$PATH"
+  export LD_LIBRARY_PATH="/home/jl/ifp/yfan/cudnn/lib64:/usr/local/cuda-8.0/lib64:$LD_LIBRARY_PATH"
   export CUDA_VISIBLE_DEVICES=`echo $SGE_HGR_gpu | sed 's/GPU//g' | awk -F ' ' '{for(i=1;i<NF;++i)printf "%i,",$i-1; printf "%i",$NF-1}'`
   GPU_NUM=`echo $SGE_HGR_gpu | sed 's/GPU//g' | awk -F ' ' '{printf "%i",NF}'`
+  SCRIPT="train.py --mem_growth=False"
   if [ $GPU_NUM -gt 1 ]; then
     SCRIPT="train_multi_sync.py --gpu_num=$GPU_NUM --mem_growth=False"
   fi
