@@ -1,12 +1,13 @@
 import tensorflow as tf
+import math
 import util
 
 flags = tf.app.flags
 FLAGS = flags.FLAGS
 
-flags.DEFINE_string('data_name', 'data_resize_residual', 'Directory to put the training data.')
-flags.DEFINE_string('hr_flist', 'flist/set5_hr.flist', 'file_list put the training data.')
-flags.DEFINE_string('lr_flist', 'flist/set5_lrX2.flist', 'Directory to put the training data.')
+flags.DEFINE_string('data_name', 'data_residual', 'Directory to put the training data.')
+flags.DEFINE_string('hr_flist', 'flist/hr_val.flist', 'file_list put the training data.')
+flags.DEFINE_string('lr_flist', 'flist/lrX2_bicubic_val.flist', 'Directory to put the training data.')
 flags.DEFINE_integer('scale', '2', 'batch size for training')
 flags.DEFINE_string('model_name', 'model_conv', 'Directory to put the training data.')
 flags.DEFINE_string('model_file', 'tmp/model_conv', 'Directory to put the training data.')
@@ -46,12 +47,19 @@ with tf.Graph().as_default():
             sr_image += lr_image
         else:
             sr_image += util.resize_func(lr_image, hr_image_shape)
+    sr_image = sr_image * tf.uint8.max + 0.5
+    sr_image = tf.saturate_cast(sr_image, tf.uint8)
+    sr_image = tf.cast(sr_image, tf.float32)
+    sr_image = sr_image * (1.0 / tf.uint8.max)
+    sr_image = util.crop_by_pixel(sr_image, FLAGS.scale + 6)
+    hr_image = util.crop_by_pixel(hr_image, FLAGS.scale + 6)
     error = tf.losses.mean_squared_error(hr_image, sr_image)
     
     init = tf.global_variables_initializer()
     init_local = tf.local_variables_initializer()
     saver = tf.train.Saver()
     error_acc = .0
+    psnr_acc = .0
     acc = 0
     with tf.Session() as sess:
         sess.run(init_local)
@@ -66,11 +74,13 @@ with tf.Graph().as_default():
         try:
             for hr_filename in hr_filename_list:
                 error_per_image = sess.run(error)
-                print error_per_image
+                psnr_per_image = -10.0 * math.log10(error_per_image)
+                print error_per_image, psnr_per_image
                 error_acc += error_per_image
+                psnr_acc += psnr_per_image
                 acc += 1
         except tf.errors.OutOfRangeError:
             print('Done validation -- epoch limit reached')
         finally:
             coord.request_stop()
-        print error_acc / acc
+        print error_acc / acc, psnr_acc / acc
