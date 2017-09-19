@@ -1,13 +1,14 @@
 import tensorflow as tf
+from tensorflow.python.lib.io import file_io
 import util
 
 resize = False
 residual = False
 
 def dataset(hr_flist, lr_flist, scale, resize=resize, residual=residual):
-    with open(hr_flist) as f:
+    with file_io.FileIO(hr_flist, "r") as f:
         hr_filename_list = f.read().splitlines()
-    with open(lr_flist) as f:
+    with file_io.FileIO(lr_flist, "r") as f:
         lr_filename_list = f.read().splitlines()
     filename_queue = tf.train.slice_input_producer([hr_filename_list, lr_filename_list], num_epochs=1)
     hr_image_file = tf.read_file(filename_queue[0])
